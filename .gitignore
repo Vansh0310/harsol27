@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# env files (never commit real secrets)
+.env
+.env.*
+!.env.example
+
+# build output
+dist/
+build/
+**/dist/
+**/build/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# prisma
+backend/prisma/*.db
+
+# test coverage
+coverage/
+
+# Prisma 7 generated client (regenerated via `prisma generate`, never hand-edited)
+backend/generated/

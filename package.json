@@ -1,0 +1,21 @@
+{
+  "name": "lead-capture-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Production lead-capture application (Node.js/Express backend, React frontend, PostgreSQL database).",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build:backend": "npm run build --workspace backend",
+    "build:frontend": "npm run build --workspace frontend",
+    "lint": "npm run lint --workspace backend && npm run lint --workspace frontend",
+    "test": "npm run test --workspace backend"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

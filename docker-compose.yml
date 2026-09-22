@@ -1,0 +1,52 @@
+# Local/staging convenience stack. NOTE: this dev sandbox's own shell cannot
+# run Docker itself - use this on a machine that has Docker installed
+# (your own laptop, a CI runner, or a self-hosted server), or as the basis
+# for the hosting platform's build config.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leadapp
+      POSTGRES_PASSWORD: leadapp_dev_only_change_me
+      POSTGRES_DB: leadapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leadapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: "postgresql://leadapp:leadapp_dev_only_change_me@postgres:5432/leadapp?schema=public"
+      CORS_ORIGIN: "http://localhost:5173"
+      JWT_ACCESS_SECRET: "local-dev-access-secret-change-me-32-chars-min"
+      JWT_REFRESH_SECRET: "local-dev-refresh-secret-change-me-32-chars-min"
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

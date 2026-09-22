@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BusinessCategory {
+  manufacturing
+  wholesale
+  retail
+  services
+  trading
+  others
+}
+
+enum LeadStatus {
+  new
+  contacted
+  converted
+  spam
+}
+
+enum AdminRole {
+  admin
+  viewer
+}
+
+model Lead {
+  id               String              @id @default(uuid())
+  fullName         String              @db.VarChar(120)
+  phoneNumber      String              @db.VarChar(20)
+  // Stored lowercase/trimmed by the application layer for consistent, dedupe-friendly
+  // case-insensitive comparisons (kept as a plain column, no citext extension needed).
+  email            String              @db.VarChar(254)
+  businessCategory BusinessCategory
+  status           LeadStatus          @default(new)
+  // Captured for abuse investigation only - never returned by the API.
+  sourceIp         String?             @db.VarChar(45)
+  userAgent        String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  statusHistory    LeadStatusHistory[]
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([businessCategory])
+  @@map("leads")
+}
+
+model AdminUser {
+  id            String              @id @default(uuid())
+  email         String              @unique @db.VarChar(254)
+  passwordHash  String
+  role          AdminRole           @default(admin)
+  // Login lockout (Phase 6): incremented on each failed password check,
+  // reset to 0 on a successful login. lockedUntil is set once attempts
+  // crosses the configured threshold and cleared automatically once it's
+  // in the past - see authService.ts.
+  failedLoginAttempts Int           @default(0)
+  lockedUntil   DateTime?
+  // Bumped on logout / password change to invalidate every refresh token
+  // issued before that point, since JWTs can't otherwise be revoked before
+  // they expire. Embedded as a claim in both access and refresh tokens.
+  tokenVersion  Int                 @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  statusChanges LeadStatusHistory[]
+
+  @@map("admin_users")
+}
+
+model LeadStatusHistory {
+  id          String     @id @default(uuid())
+  lead        Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId      String
+  changedBy   AdminUser  @relation(fields: [adminUserId], references: [id])
+  adminUserId String
+  fromStatus  LeadStatus?
+  toStatus    LeadStatus
+  createdAt   DateTime   @default(now())
+
+  @@index([leadId])
+  @@map("lead_status_history")
+}

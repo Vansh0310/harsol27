@@ -7,6 +7,7 @@ import pinoHttp from 'pino-http';
 import { env } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 import { createAuthRouter } from './routes/auth';
+import { createIndustriesRouter } from './routes/industries';
 import { createLeadsRouter } from './routes/leads';
 import { healthRouter } from './routes/health';
 import { logger } from './utils/logger';
@@ -54,6 +55,7 @@ export function createApp(): Express {
   app.use('/health', healthRouter);
   app.use('/api/auth', createAuthRouter());
   app.use('/api/leads', createLeadsRouter());
+  app.use('/api/industries', createIndustriesRouter());
 
   app.use((req, res) => {
     res.status(404).json({

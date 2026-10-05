@@ -9,6 +9,10 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    // Run via `prisma migrate dev`/`migrate reset` automatically, or
+    // directly with `npm run prisma:seed`. Upserts by slug (see
+    // prisma/seed.ts) so it's always safe to re-run.
+    seed: 'tsx prisma/seed.ts',
   },
   datasource: {
     url: env('DATABASE_URL'),

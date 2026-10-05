@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import type { AdminRole } from '../../generated/prisma/enums';
 import { findAdminById } from '../repositories/adminRepository';
 import { ACCESS_TOKEN_COOKIE, verifyAccessToken } from '../utils/jwt';
 
@@ -36,4 +37,23 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   req.admin = { id: admin.id, email: admin.email, role: admin.role };
   next();
+}
+
+/**
+ * Restricts a route to one specific admin role, on top of requireAuth
+ * (which must run first - this reads req.admin and assumes it's already
+ * set). Used for the industry-management write endpoints: a 'viewer' can
+ * see the list, same as any authenticated admin, but only 'admin' can
+ * create, rename, reorder, or deactivate one.
+ */
+export function requireRole(role: AdminRole) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.admin || req.admin.role !== role) {
+      res
+        .status(403)
+        .json({ error: 'forbidden', message: 'You do not have permission to do that.' });
+      return;
+    }
+    next();
+  };
 }

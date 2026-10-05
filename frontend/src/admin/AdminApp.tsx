@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 import { AdminLayout } from './AdminLayout';
 import { AuthProvider } from './AuthContext';
 import { DashboardPage } from './DashboardPage';
+import { IndustriesPage } from './IndustriesPage';
 import { LeadDetailPage } from './LeadDetailPage';
 import { LoginPage } from './LoginPage';
 import { RequireAuth } from './RequireAuth';
@@ -27,6 +28,7 @@ export default function AdminApp() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="leads/:id" element={<LeadDetailPage />} />
+          <Route path="industries" element={<IndustriesPage />} />
         </Route>
       </Routes>
     </AuthProvider>

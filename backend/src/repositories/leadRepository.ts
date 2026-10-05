@@ -6,6 +6,7 @@ export interface CreateLeadRecord {
   phoneNumber: string;
   email: string;
   businessCategory: BusinessCategory;
+  industryId: string;
   sourceIp: string | null;
   userAgent: string | null;
 }
@@ -31,8 +32,14 @@ export async function insertLead(data: CreateLeadRecord): Promise<CreatedLead> {
   });
 }
 
+export interface LeadIndustryRef {
+  id: string;
+  name: string;
+}
+
 export interface LeadListFilters {
   businessCategory?: BusinessCategory;
+  industryId?: string;
   status?: LeadStatus;
   dateFrom?: Date;
   dateTo?: Date;
@@ -51,6 +58,9 @@ export interface LeadSummary {
   phoneNumber: string;
   email: string;
   businessCategory: BusinessCategory;
+  // Null only for leads submitted before this field existed - see the
+  // industryId doc comment on the Lead model in schema.prisma.
+  industry: LeadIndustryRef | null;
   status: LeadStatus;
   createdAt: Date;
 }
@@ -63,6 +73,7 @@ export interface LeadListResult {
 function buildWhere(filters: LeadListFilters): Prisma.LeadWhereInput {
   const where: Prisma.LeadWhereInput = {};
   if (filters.businessCategory) where.businessCategory = filters.businessCategory;
+  if (filters.industryId) where.industryId = filters.industryId;
   if (filters.status) where.status = filters.status;
   if (filters.dateFrom || filters.dateTo) {
     where.createdAt = {
@@ -88,6 +99,7 @@ export async function listLeads(options: LeadListOptions): Promise<LeadListResul
     phoneNumber: true,
     email: true,
     businessCategory: true,
+    industry: { select: { id: true, name: true } },
     status: true,
     createdAt: true,
   } as const;
@@ -120,6 +132,7 @@ export interface LeadDetail {
   phoneNumber: string;
   email: string;
   businessCategory: BusinessCategory;
+  industry: LeadIndustryRef | null;
   status: LeadStatus;
   // Only ever surfaced here, to an authenticated admin - never on the
   // public API - per the schema's own "abuse investigation only" comment.
@@ -139,6 +152,7 @@ export async function findLeadById(id: string): Promise<LeadDetail | null> {
       phoneNumber: true,
       email: true,
       businessCategory: true,
+      industry: { select: { id: true, name: true } },
       status: true,
       sourceIp: true,
       userAgent: true,
@@ -213,6 +227,7 @@ async function findLeadByIdTx(
       phoneNumber: true,
       email: true,
       businessCategory: true,
+      industry: { select: { id: true, name: true } },
       status: true,
       sourceIp: true,
       userAgent: true,

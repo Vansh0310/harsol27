@@ -21,6 +21,7 @@ const baseLead = {
   email: 'jane@example.com',
   phoneNumber: '+919876543210',
   businessCategory: 'manufacturing' as const,
+  industryName: 'Textiles & Fabrics',
   createdAt: new Date('2026-01-01T10:00:00.000Z'),
 };
 
@@ -48,6 +49,7 @@ describe('notifyNewLead', () => {
     expect(adminCall).toBeDefined();
     expect(adminCall![0].text).toContain('Jane Doe');
     expect(adminCall![0].text).toContain(baseLead.id);
+    expect(adminCall![0].text).toContain('Textiles & Fabrics');
     expect(adminCall![0].html).toContain('Jane Doe');
   });
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as api from './api';
-import type { LeadStatus, ListLeadsParams, PaginatedLeads } from './api';
+import type { Industry, LeadStatus, ListLeadsParams, PaginatedLeads } from './api';
 import { UnauthorizedError } from './api';
 import { useAuth } from './AuthContext';
 import {
@@ -17,12 +17,19 @@ type SortableField = NonNullable<ListLeadsParams['sortBy']>;
 
 interface Filters {
   businessCategory: BusinessCategory | '';
+  industryId: string;
   status: LeadStatus | '';
   dateFrom: string;
   dateTo: string;
 }
 
-const EMPTY_FILTERS: Filters = { businessCategory: '', status: '', dateFrom: '', dateTo: '' };
+const EMPTY_FILTERS: Filters = {
+  businessCategory: '',
+  industryId: '',
+  status: '',
+  dateFrom: '',
+  dateTo: '',
+};
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -44,6 +51,27 @@ export function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Every industry (including inactive ones), so filtering by an industry
+  // that's since been deactivated still works for historical leads - unlike
+  // the public form's dropdown, which only ever shows active ones.
+  const [industries, setIndustries] = useState<Industry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .listAllIndustries()
+      .then((result) => {
+        if (!cancelled) setIndustries(result);
+      })
+      .catch(() => {
+        // Filter dropdown just falls back to "All" if this fails - never
+        // worth blocking or erroring the whole dashboard over.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     // Intentional: this is the standard "reset, then fetch" data-loading
@@ -60,6 +88,7 @@ export function DashboardPage() {
       sortBy,
       sortDir,
       businessCategory: filters.businessCategory || undefined,
+      industryId: filters.industryId || undefined,
       status: filters.status || undefined,
       dateFrom: filters.dateFrom || undefined,
       dateTo: filters.dateTo || undefined,
@@ -131,6 +160,22 @@ export function DashboardPage() {
         </label>
 
         <label>
+          Industry
+          <select
+            value={filters.industryId}
+            onChange={(e) => updateFilter('industryId', e.target.value)}
+          >
+            <option value="">All</option>
+            {industries.map((industry) => (
+              <option key={industry.id} value={industry.id}>
+                {industry.name}
+                {!industry.isActive ? ' (inactive)' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
           Status
           <select
             value={filters.status}
@@ -183,6 +228,7 @@ export function DashboardPage() {
             <th onClick={() => toggleSort('businessCategory')}>
               Category{sortIndicator('businessCategory')}
             </th>
+            <th>Industry</th>
             <th onClick={() => toggleSort('status')}>Status{sortIndicator('status')}</th>
             <th onClick={() => toggleSort('createdAt')}>Submitted{sortIndicator('createdAt')}</th>
           </tr>
@@ -190,12 +236,12 @@ export function DashboardPage() {
         <tbody>
           {loading && (
             <tr>
-              <td colSpan={6}>Loading…</td>
+              <td colSpan={7}>Loading…</td>
             </tr>
           )}
           {!loading && data?.leads.length === 0 && (
             <tr>
-              <td colSpan={6}>No leads match these filters.</td>
+              <td colSpan={7}>No leads match these filters.</td>
             </tr>
           )}
           {!loading &&
@@ -207,6 +253,7 @@ export function DashboardPage() {
                 <td>{lead.phoneNumber}</td>
                 <td>{lead.email}</td>
                 <td>{BUSINESS_CATEGORY_LABELS[lead.businessCategory]}</td>
+                <td>{lead.industry?.name ?? '—'}</td>
                 <td>
                   <span className={`status-badge status-badge--${lead.status}`}>
                     {LEAD_STATUS_LABELS[lead.status]}

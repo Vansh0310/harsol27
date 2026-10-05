@@ -47,6 +47,12 @@ export const createLeadSchema = z.object({
     message: 'Select a valid business category.',
   }),
 
+  // Format-only check here - a well-formed UUID can still name an industry
+  // that doesn't exist or has since been deactivated, so leadService does
+  // the real existence/active check against the database before this ever
+  // reaches insertLead (see leadService.ts).
+  industryId: z.uuid('Select a valid industry.'),
+
   // Honeypot: a real visitor never sees this field (hidden via CSS on the
   // frontend). Any non-empty value here marks the submission as a bot -
   // handled in the controller, which returns success without persisting it.

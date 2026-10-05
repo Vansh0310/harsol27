@@ -1,0 +1,76 @@
+name: CI
+
+# Runs on every PR into main and every push to main, per the plan doc's
+# "nothing merges to main without passing" gate. Deployment (staging/
+# production) isn't wired up here yet - that's Phase 9, once a hosting
+# platform is actually chosen; this workflow only gates the code itself.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    env:
+      # Backend tests mock the Prisma repository layer and the email
+      # service entirely (see backend/tests/*.test.ts) - nothing here ever
+      # opens a real DB connection or sends a real email. These values only
+      # need to satisfy src/config/env.ts's Zod validation at import time.
+      NODE_ENV: test
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci_test
+      CORS_ORIGIN: http://localhost:5173
+      JWT_ACCESS_SECRET: ci-test-access-secret-value-not-real-000
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-value-not-real-00
+      EMAIL_API_KEY: ci-test-fake-email-api-key
+      EMAIL_FROM: "Lead Capture <noreply@example.com>"
+      ADMIN_NOTIFICATION_EMAIL: admin@example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace backend
+
+      - name: Type-check
+        run: npm run typecheck --workspace backend
+
+      - name: Test
+        run: npm run test --workspace backend
+
+      - name: Build
+        run: npm run build --workspace backend
+
+  frontend:
+    name: Frontend (lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace frontend
+
+      - name: Type-check
+        run: npm run typecheck --workspace frontend
+
+      - name: Test
+        run: npm run test --workspace frontend
+
+      - name: Build
+        run: npm run build --workspace frontend

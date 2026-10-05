@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import './admin.css';
 
@@ -15,6 +15,10 @@ export function AdminLayout() {
     <div className="admin-layout">
       <header className="admin-layout__header">
         <span className="admin-layout__title">Harsol27 Admin</span>
+        <nav className="admin-layout__nav">
+          <Link to="/admin">Leads</Link>
+          <Link to="/admin/industries">Industries</Link>
+        </nav>
         <div className="admin-layout__account">
           {admin && <span className="admin-layout__email">{admin.email}</span>}
           <button type="button" onClick={() => void handleLogout()}>

@@ -28,6 +28,32 @@ enum AdminRole {
   viewer
 }
 
+model Industry {
+  id        String   @id @default(uuid())
+  // Display name, e.g. "Steel & Metal Products" - shown in both the public
+  // form's dropdown and the admin management screen.
+  name      String   @unique @db.VarChar(80)
+  // URL/log-friendly identifier derived from name at creation time (see
+  // industryService.slugify) - stable even if the display name is edited later.
+  slug      String   @unique @db.VarChar(80)
+  // Soft-delete flag: an industry already referenced by existing leads is
+  // never hard-deleted (that would either orphan or cascade-delete real
+  // lead data). Deactivating just hides it from the public dropdown and the
+  // active-only admin list; historical leads keep showing it via the
+  // relation below regardless of this flag.
+  isActive  Boolean  @default(true)
+  // Manual display order for both dropdowns; ties broken by name. Seeded in
+  // steps of 10 so new industries can be inserted between existing ones
+  // without renumbering everything else.
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  leads     Lead[]
+
+  @@index([isActive, sortOrder])
+  @@map("industries")
+}
+
 model Lead {
   id               String              @id @default(uuid())
   fullName         String              @db.VarChar(120)
@@ -36,6 +62,13 @@ model Lead {
   // case-insensitive comparisons (kept as a plain column, no citext extension needed).
   email            String              @db.VarChar(254)
   businessCategory BusinessCategory
+  // Nullable because leads created before this field existed have no
+  // value - never backfilled, since we have no reliable way to infer it.
+  // Every lead created through the public form from here on sets it (see
+  // validators/lead.ts); onDelete: SetNull is defense-in-depth only - the
+  // application never hard-deletes an Industry row, only deactivates it.
+  industryId       String?
+  industry         Industry?           @relation(fields: [industryId], references: [id], onDelete: SetNull)
   status           LeadStatus          @default(new)
   // Captured for abuse investigation only - never returned by the API.
   sourceIp         String?             @db.VarChar(45)
@@ -47,6 +80,7 @@ model Lead {
   @@index([createdAt])
   @@index([email])
   @@index([businessCategory])
+  @@index([industryId])
   @@map("leads")
 }
 

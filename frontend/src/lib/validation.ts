@@ -70,6 +70,13 @@ export const leadFormSchema = z.object({
     message: 'Select a business category.',
   }),
 
+  // The active industry list is fetched at runtime (see lib/industries.ts)
+  // rather than a fixed Zod enum like businessCategory, since an admin can
+  // add or deactivate one at any time - this only checks a value was
+  // actually picked, not that it's real. The backend re-validates the id
+  // against the database regardless (see backend/src/validators/lead.ts).
+  industryId: z.string().min(1, 'Select an industry.'),
+
   // Honeypot - real users never see this input (CSS-hidden in LeadForm).
   // Left blank by humans; a filled value means a bot filled every field
   // it could find. The backend silently accepts-but-drops these.

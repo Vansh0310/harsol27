@@ -9,6 +9,10 @@ export interface LeadNotificationData {
   email: string;
   phoneNumber: string;
   businessCategory: (typeof BUSINESS_CATEGORY_VALUES)[number];
+  // Resolved name, not an id - leadService already looked the industry up
+  // (to validate it) by the time it builds this, so the email layer never
+  // needs its own database access.
+  industryName: string;
   createdAt: Date;
 }
 
@@ -80,6 +84,7 @@ function buildAdminAlertEmail(lead: LeadNotificationData): EmailContent {
     ['Phone', lead.phoneNumber],
     ['Email', lead.email],
     ['Business category', categoryLabel],
+    ['Industry', lead.industryName],
     ['Submitted', formatTimestamp(lead.createdAt)],
     ['Lead ID', lead.id],
   ];

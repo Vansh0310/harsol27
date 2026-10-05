@@ -194,3 +194,67 @@
   color: light-dark(#666, #aaa);
   font-size: 0.85rem;
 }
+
+.status-badge--inactive {
+  background: light-dark(#f0f0f0, #2a2a2a);
+  color: light-dark(#777, #999);
+}
+
+.industries__hint {
+  color: light-dark(#666, #aaa);
+  font-size: 0.9rem;
+  max-width: 60ch;
+}
+
+.industries__add {
+  display: flex;
+  align-items: end;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.industries__add label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.industries__add input {
+  padding: 0.4rem 0.5rem;
+  min-width: 260px;
+}
+
+.industries__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.industries__table th,
+.industries__table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid light-dark(#eee, #333);
+}
+
+.industries__actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.industries__actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.industries__actions button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.admin-layout__nav {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+}

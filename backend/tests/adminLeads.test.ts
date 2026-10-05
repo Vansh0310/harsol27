@@ -29,6 +29,7 @@ const sampleLead = {
   phoneNumber: '+919876543210',
   email: 'jane@example.com',
   businessCategory: 'manufacturing' as const,
+  industry: { id: 'industry_1', name: 'Textiles & Fabrics' },
   status: 'new' as const,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
 };
@@ -78,6 +79,7 @@ describe('GET /api/leads (admin)', () => {
         page: 2,
         pageSize: 10,
         businessCategory: 'retail',
+        industryId: 'a4b1c0e0-1111-4a11-8a11-000000000001',
         status: 'contacted',
         sortBy: 'fullName',
         sortDir: 'asc',
@@ -89,11 +91,22 @@ describe('GET /api/leads (admin)', () => {
         page: 2,
         pageSize: 10,
         businessCategory: 'retail',
+        industryId: 'a4b1c0e0-1111-4a11-8a11-000000000001',
         status: 'contacted',
         sortBy: 'fullName',
         sortDir: 'asc',
       }),
     );
+  });
+
+  it('rejects a malformed industryId filter with a 400', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .get('/api/leads')
+      .query({ industryId: 'not-a-uuid' })
+      .set('Cookie', authCookie());
+
+    expect(res.status).toBe(400);
   });
 
   it('rejects an invalid businessCategory filter with a 400', async () => {

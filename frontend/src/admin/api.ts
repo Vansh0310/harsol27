@@ -13,12 +13,26 @@ export interface AdminSession {
   role: 'admin' | 'viewer';
 }
 
+export interface IndustryRef {
+  id: string;
+  name: string;
+}
+
+export interface Industry extends IndustryRef {
+  slug: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface LeadSummary {
   id: string;
   fullName: string;
   phoneNumber: string;
   email: string;
   businessCategory: BusinessCategory;
+  industry: IndustryRef | null;
   status: LeadStatus;
   createdAt: string;
 }
@@ -50,6 +64,7 @@ export interface ListLeadsParams {
   page?: number;
   pageSize?: number;
   businessCategory?: BusinessCategory;
+  industryId?: string;
   status?: LeadStatus;
   dateFrom?: string;
   dateTo?: string;
@@ -213,4 +228,44 @@ export async function updateLeadStatus(id: string, status: LeadStatus): Promise<
   }
   const body = (await res.json()) as { lead: LeadDetail };
   return body.lead;
+}
+
+/** GET /api/industries/all - every industry, active or not (management screen). */
+export async function listAllIndustries(): Promise<Industry[]> {
+  const res = await apiFetch('/api/industries/all');
+  if (!res.ok) {
+    const { message } = await parseErrorBody(res);
+    throw new ApiError(res.status, message);
+  }
+  const body = (await res.json()) as { industries: Industry[] };
+  return body.industries;
+}
+
+export async function createIndustry(name: string): Promise<Industry> {
+  const res = await apiFetch('/api/industries', { method: 'POST', body: JSON.stringify({ name }) });
+  if (!res.ok) {
+    const { message, fields } = await parseErrorBody(res);
+    throw new ApiError(res.status, message, fields);
+  }
+  const body = (await res.json()) as { industry: Industry };
+  return body.industry;
+}
+
+export interface UpdateIndustryInput {
+  name?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export async function updateIndustry(id: string, input: UpdateIndustryInput): Promise<Industry> {
+  const res = await apiFetch(`/api/industries/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const { message, fields } = await parseErrorBody(res);
+    throw new ApiError(res.status, message, fields);
+  }
+  const body = (await res.json()) as { industry: Industry };
+  return body.industry;
 }

@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { submitLead } from '../lib/apiClient';
+import { fetchActiveIndustries, type IndustryOption } from '../lib/industries';
 import {
   BUSINESS_CATEGORY_LABELS,
   BUSINESS_CATEGORY_VALUES,
@@ -11,6 +12,9 @@ import {
 } from '../lib/validation';
 import './LeadForm.css';
 
+type IndustriesState =
+  { status: 'loading' } | { status: 'ready'; industries: IndustryOption[] } | { status: 'error' };
+
 type SubmitState =
   | { status: 'idle' }
   | { status: 'submitting' }
@@ -19,6 +23,7 @@ type SubmitState =
 
 export function LeadForm() {
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' });
+  const [industriesState, setIndustriesState] = useState<IndustriesState>({ status: 'loading' });
 
   const {
     register,
@@ -32,9 +37,27 @@ export function LeadForm() {
       phoneNumber: '',
       email: '',
       businessCategory: undefined,
+      industryId: '',
       companyWebsite: '',
     },
   });
+
+  const loadIndustries = (onCancelled?: () => boolean): void => {
+    void fetchActiveIndustries().then((result) => {
+      if (onCancelled?.()) return;
+      setIndustriesState(
+        result.ok ? { status: 'ready', industries: result.industries } : { status: 'error' },
+      );
+    });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    loadIndustries(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onSubmit = async (values: LeadFormValues): Promise<void> => {
     setSubmitState({ status: 'submitting' });
@@ -159,6 +182,48 @@ export function LeadForm() {
         )}
       </div>
 
+      <div className="lead-form__field">
+        <label htmlFor="industryId">Industry</label>
+        <select
+          id="industryId"
+          defaultValue=""
+          disabled={industriesState.status !== 'ready'}
+          aria-invalid={!!errors.industryId}
+          aria-describedby={errors.industryId ? 'industryId-error' : undefined}
+          {...register('industryId')}
+        >
+          <option value="" disabled>
+            {industriesState.status === 'loading' ? 'Loading industries…' : 'Select an industry'}
+          </option>
+          {industriesState.status === 'ready' &&
+            industriesState.industries.map((industry) => (
+              <option key={industry.id} value={industry.id}>
+                {industry.name}
+              </option>
+            ))}
+        </select>
+        {errors.industryId && (
+          <p id="industryId-error" className="lead-form__error" role="alert">
+            {errors.industryId.message}
+          </p>
+        )}
+        {industriesState.status === 'error' && (
+          <p className="lead-form__error" role="alert">
+            Couldn&apos;t load the industry list.{' '}
+            <button
+              type="button"
+              className="lead-form__retry"
+              onClick={() => {
+                setIndustriesState({ status: 'loading' });
+                loadIndustries();
+              }}
+            >
+              Retry
+            </button>
+          </p>
+        )}
+      </div>
+
       {/* Honeypot: hidden off-screen for sighted and screen-reader users
           alike, but still present for a bot that blindly fills every field
           it finds in the DOM. tabIndex -1 keeps it out of keyboard tab order. */}
@@ -183,7 +248,7 @@ export function LeadForm() {
         </p>
       )}
 
-      <button type="submit" disabled={isSubmitting}>
+      <button type="submit" disabled={isSubmitting || industriesState.status !== 'ready'}>
         {isSubmitting ? 'Submitting…' : 'Submit'}
       </button>
     </form>

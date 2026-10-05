@@ -7,7 +7,7 @@ module.exports = [
     ignores: ['dist/**', 'node_modules/**', 'generated/**'],
   },
   {
-    files: ['src/**/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts'],
+    files: ['src/**/*.ts', 'tests/**/*.ts', 'scripts/**/*.ts', 'prisma/**/*.ts', 'prisma.config.ts'],
     languageOptions: {
       parser,
       parserOptions: {

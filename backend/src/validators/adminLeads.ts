@@ -10,6 +10,7 @@ export const listLeadsQuerySchema = z
     page: z.coerce.number().int().positive().default(1),
     pageSize: z.coerce.number().int().positive().max(100).default(20),
     businessCategory: z.enum(BUSINESS_CATEGORY_VALUES).optional(),
+    industryId: z.uuid().optional(),
     status: z.enum(LEAD_STATUS_VALUES).optional(),
     dateFrom: z.coerce.date().optional(),
     dateTo: z.coerce.date().optional(),

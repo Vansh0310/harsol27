@@ -4,11 +4,16 @@ vi.mock('../src/repositories/leadRepository', () => ({
   insertLead: vi.fn(),
 }));
 
+vi.mock('../src/repositories/industryRepository', () => ({
+  findIndustryById: vi.fn(),
+}));
+
 vi.mock('../src/services/emailService', () => ({
   notifyNewLead: vi.fn(),
 }));
 
 import { insertLead } from '../src/repositories/leadRepository';
+import { findIndustryById } from '../src/repositories/industryRepository';
 import { notifyNewLead } from '../src/services/emailService';
 import { submitLead } from '../src/services/leadService';
 
@@ -17,7 +22,18 @@ const validInput = {
   phoneNumber: '+919876543210',
   email: 'jane@example.com',
   businessCategory: 'manufacturing' as const,
+  industryId: 'industry_1',
   companyWebsite: '',
+};
+
+const activeIndustry = {
+  id: 'industry_1',
+  name: 'Textiles & Fabrics',
+  slug: 'textiles-fabrics',
+  isActive: true,
+  sortOrder: 10,
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
 const context = { ip: '127.0.0.1', userAgent: 'vitest' };
@@ -25,7 +41,9 @@ const context = { ip: '127.0.0.1', userAgent: 'vitest' };
 describe('submitLead', () => {
   beforeEach(() => {
     vi.mocked(insertLead).mockReset();
+    vi.mocked(findIndustryById).mockReset();
     vi.mocked(notifyNewLead).mockReset();
+    vi.mocked(findIndustryById).mockResolvedValue(activeIndustry);
   });
 
   it('persists the lead and fires a notification with the full lead details', async () => {
@@ -38,6 +56,7 @@ describe('submitLead', () => {
     const result = await submitLead(validInput, context);
 
     expect(result).toEqual({ id: 'lead_1', createdAt: new Date('2026-01-01T00:00:00.000Z') });
+    expect(insertLead).toHaveBeenCalledWith(expect.objectContaining({ industryId: 'industry_1' }));
     // Wait a tick so the fire-and-forget notification call has been made.
     await new Promise((resolve) => setImmediate(resolve));
     expect(notifyNewLead).toHaveBeenCalledWith(
@@ -47,8 +66,24 @@ describe('submitLead', () => {
         email: validInput.email,
         phoneNumber: validInput.phoneNumber,
         businessCategory: validInput.businessCategory,
+        industryName: 'Textiles & Fabrics',
       }),
     );
+  });
+
+  it('rejects and never persists when the industry id does not exist', async () => {
+    vi.mocked(findIndustryById).mockResolvedValue(null);
+
+    await expect(submitLead(validInput, context)).rejects.toMatchObject({ statusCode: 400 });
+    expect(insertLead).not.toHaveBeenCalled();
+    expect(notifyNewLead).not.toHaveBeenCalled();
+  });
+
+  it('rejects and never persists when the industry has been deactivated', async () => {
+    vi.mocked(findIndustryById).mockResolvedValue({ ...activeIndustry, isActive: false });
+
+    await expect(submitLead(validInput, context)).rejects.toMatchObject({ statusCode: 400 });
+    expect(insertLead).not.toHaveBeenCalled();
   });
 
   it('resolves immediately even if the notification job is still pending', async () => {

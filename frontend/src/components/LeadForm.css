@@ -42,6 +42,17 @@
   text-align: center;
 }
 
+.lead-form__retry {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Off-screen, not display:none - some bots skip display:none fields, and
    this keeps it unreachable for sighted/keyboard/screen-reader users too. */
 .lead-form__honeypot {

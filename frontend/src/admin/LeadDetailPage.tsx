@@ -99,6 +99,8 @@ export function LeadDetailPage() {
         <dd>{lead.email}</dd>
         <dt>Business category</dt>
         <dd>{BUSINESS_CATEGORY_LABELS[lead.businessCategory]}</dd>
+        <dt>Industry</dt>
+        <dd>{lead.industry?.name ?? '—'}</dd>
         <dt>Submitted</dt>
         <dd>{formatDate(lead.createdAt)}</dd>
         <dt>Source IP</dt>

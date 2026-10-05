@@ -29,7 +29,7 @@ jobs:
       EMAIL_FROM: "Lead Capture <noreply@example.com>"
       ADMIN_NOTIFICATION_EMAIL: admin@example.com
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -54,7 +54,7 @@ jobs:
     name: Frontend (lint, typecheck, test, build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
